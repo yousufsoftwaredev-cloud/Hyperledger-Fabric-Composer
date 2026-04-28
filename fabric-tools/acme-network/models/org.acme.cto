@@ -1,0 +1,268 @@
+/*
+ * Drug Supply Chain Control System
+ * Model File - defines all participants, assets, transactions and events
+ */
+
+namespace org.acme
+
+// ============================================================
+// PARTICIPANTS
+// ============================================================
+
+participant Government identified by govId {
+  o String govId
+  o String name
+}
+
+participant Manufacturer identified by manufacturerId {
+  o String manufacturerId
+  o String name
+  o String location
+}
+
+participant Pharmacy identified by pharmacyId {
+  o String pharmacyId
+  o String name
+  o String location
+}
+
+participant Doctor identified by doctorId {
+  o String doctorId
+  o String name
+  o String licenseNumber
+  o String specialization
+}
+
+participant Citizen identified by citizenId {
+  o String citizenId
+  o String name
+  o String dateOfBirth
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum LicenseStatus {
+  o ACTIVE
+  o REVOKED
+  o EXPIRED
+}
+
+enum MedicineStatus {
+  o PRODUCED
+  o IN_ORDER
+  o WITH_PHARMACY
+  o SOLD
+}
+
+enum OrderStatus {
+  o PENDING
+  o PROCESSING
+  o DELIVERED
+  o CANCELLED
+}
+
+enum OwnerType {
+  o MANUFACTURER
+  o PHARMACY
+  o CITIZEN
+  o GOVERNMENT
+}
+
+// ============================================================
+// CONCEPTS (embedded objects, not stored separately)
+// ============================================================
+
+concept PrescriptionItem {
+  --> MedicineType medicineType
+  o Integer quantity
+  o Integer remaining
+}
+
+// ============================================================
+// ASSETS
+// ============================================================
+
+/**
+ * MedicineType - specification of a drug registered by Government
+ * Government creates this to define what drugs exist in the system
+ */
+asset MedicineType identified by medicineTypeId {
+  o String medicineTypeId
+  o String name
+  o String description
+  o String activeIngredient
+  o Boolean requiresPrescription
+  --> Government registeredBy
+}
+
+/**
+ * License - production license issued by Government to a Manufacturer
+ * Manufacturer must have an ACTIVE license to produce a specific MedicineType
+ */
+asset License identified by licenseId {
+  o String licenseId
+  o LicenseStatus status
+  o DateTime issueDate
+  o DateTime expiryDate
+  --> Manufacturer manufacturer
+  --> MedicineType medicineType
+  --> Government issuedBy
+}
+
+/**
+ * Medicine - a single physical unit of medicine with a unique ID
+ * ownerId stores the full resource identifier since ownership changes hands
+ * e.g. "resource:org.acme.Pharmacy#pharmacy1"
+ */
+asset Medicine identified by medicineId {
+  o String medicineId
+  o DateTime expiryDate
+  o MedicineStatus status
+  o String ownerId
+  o OwnerType ownerType
+  --> MedicineType medicineType
+  --> License producedUnderLicense
+  --> Manufacturer producedBy
+}
+
+/**
+ * Order - created by Pharmacy to request medicine units from Manufacturer
+ */
+asset Order identified by orderId {
+  o String orderId
+  o Integer quantity
+  o OrderStatus status
+  --> MedicineType medicineType
+  --> Pharmacy pharmacy
+  --> Manufacturer manufacturer
+  --> Medicine[] medicines optional
+}
+
+/**
+ * Prescription - written by Doctor for a Citizen
+ * Contains items with remaining counter that decrements on each sale
+ */
+asset Prescription identified by prescriptionId {
+  o String prescriptionId
+  o DateTime issueDate
+  o DateTime expiryDate
+  o Boolean isValid
+  --> Doctor doctor
+  --> Citizen citizen
+  o PrescriptionItem[] items
+}
+
+// ============================================================
+// TRANSACTIONS
+// ============================================================
+
+// --- Government transactions ---
+
+transaction RegisterMedicineType {
+  o String medicineTypeId
+  o String name
+  o String description
+  o String activeIngredient
+  o Boolean requiresPrescription
+}
+
+transaction IssueLicense {
+  o String licenseId
+  --> Manufacturer manufacturer
+  --> MedicineType medicineType
+  o DateTime expiryDate
+}
+
+transaction RevokeLicense {
+  --> License license
+}
+
+transaction ProlongateLicense {
+  --> License license
+  o DateTime newExpiryDate
+}
+
+// --- Manufacturer transactions ---
+
+transaction CreateMedicine {
+  o String medicineId
+  --> MedicineType medicineType
+  --> License license
+  o DateTime expiryDate
+}
+
+transaction ProcessOrder {
+  --> Order order
+}
+
+transaction FulfillOrder {
+  --> Order order
+  --> Medicine[] medicines
+}
+
+// --- Pharmacy transactions ---
+
+transaction CreateOrder {
+  o String orderId
+  --> MedicineType medicineType
+  --> Manufacturer manufacturer
+  o Integer quantity
+}
+
+transaction SellMedicine {
+  --> Medicine medicine
+  --> Citizen citizen
+  --> Prescription prescription optional
+}
+
+// --- Doctor transactions ---
+
+transaction WritePrescription {
+  o String prescriptionId
+  --> Citizen citizen
+  o PrescriptionItem[] items
+  o DateTime expiryDate
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+
+event LicenseIssued {
+  --> License license
+  --> Manufacturer manufacturer
+}
+
+event LicenseRevoked {
+  --> License license
+}
+
+event LicenseProlongated {
+  --> License license
+  o DateTime newExpiryDate
+}
+
+event MedicineCreated {
+  --> Medicine medicine
+  --> Manufacturer manufacturer
+}
+
+event OrderCreated {
+  --> Order order
+}
+
+event OrderFulfilled {
+  --> Order order
+}
+
+event PrescriptionWritten {
+  --> Prescription prescription
+  --> Citizen citizen
+}
+
+event MedicineSold {
+  --> Medicine medicine
+  --> Citizen citizen
+}

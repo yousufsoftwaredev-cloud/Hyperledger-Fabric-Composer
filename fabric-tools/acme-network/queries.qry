@@ -1,0 +1,115 @@
+/*
+ * Drug Supply Chain Control System
+ * Query Definitions
+ */
+
+// Get all registered medicine types
+query GetAllMedicineTypes {
+    description: "Get all medicine types registered by Government"
+    statement:
+        SELECT org.acme.MedicineType
+}
+
+// Get medicine types that require a prescription
+query GetPrescriptionMedicineTypes {
+    description: "Get medicine types that require a prescription to purchase"
+    statement:
+        SELECT org.acme.MedicineType
+        WHERE (requiresPrescription == true)
+}
+
+// Get all licenses for a specific manufacturer
+query GetLicensesByManufacturer {
+    description: "Get all licenses issued to a specific manufacturer"
+    statement:
+        SELECT org.acme.License
+        WHERE (manufacturer == _$manufacturer)
+}
+
+// Get only active licenses for a manufacturer
+query GetActiveLicensesByManufacturer {
+    description: "Get active licenses for a specific manufacturer"
+    statement:
+        SELECT org.acme.License
+        WHERE (manufacturer == _$manufacturer AND status == 'ACTIVE')
+}
+
+// Get all medicine units by status
+query GetMedicineByStatus {
+    description: "Get all medicine units with a specific status (PRODUCED, WITH_PHARMACY, SOLD)"
+    statement:
+        SELECT org.acme.Medicine
+        WHERE (status == _$status)
+}
+
+// Get all medicine units of a specific type
+query GetMedicineByType {
+    description: "Get all medicine units of a specific medicine type"
+    statement:
+        SELECT org.acme.Medicine
+        WHERE (medicineType == _$medicineType)
+}
+
+// Get medicine units owned by a specific entity (use full resource ID)
+query GetMedicineByOwner {
+    description: "Get medicine units by owner (e.g. resource:org.acme.Pharmacy#pharmacy1)"
+    statement:
+        SELECT org.acme.Medicine
+        WHERE (ownerId == _$ownerId)
+}
+
+// Get all medicine produced by a specific manufacturer
+query GetMedicineByManufacturer {
+    description: "Get all medicine units produced by a specific manufacturer"
+    statement:
+        SELECT org.acme.Medicine
+        WHERE (producedBy == _$manufacturer)
+}
+
+// Get orders placed by a specific pharmacy
+query GetOrdersByPharmacy {
+    description: "Get all orders placed by a specific pharmacy"
+    statement:
+        SELECT org.acme.Order
+        WHERE (pharmacy == _$pharmacy)
+}
+
+// Get orders assigned to a specific manufacturer
+query GetOrdersByManufacturer {
+    description: "Get all orders assigned to a specific manufacturer"
+    statement:
+        SELECT org.acme.Order
+        WHERE (manufacturer == _$manufacturer)
+}
+
+// Get orders by status
+query GetOrdersByStatus {
+    description: "Get orders by their current status (PENDING, PROCESSING, DELIVERED, CANCELLED)"
+    statement:
+        SELECT org.acme.Order
+        WHERE (status == _$status)
+}
+
+// Get all prescriptions written for a citizen
+query GetPrescriptionsByCitizen {
+    description: "Get all prescriptions belonging to a specific citizen"
+    statement:
+        SELECT org.acme.Prescription
+        WHERE (citizen == _$citizen)
+}
+
+// Get all prescriptions written by a doctor
+query GetPrescriptionsByDoctor {
+    description: "Get all prescriptions written by a specific doctor"
+    statement:
+        SELECT org.acme.Prescription
+        WHERE (doctor == _$doctor)
+}
+
+// Get all valid prescriptions
+query GetValidPrescriptions {
+    description: "Get all currently valid prescriptions"
+    statement:
+        SELECT org.acme.Prescription
+        WHERE (isValid == true)
+}

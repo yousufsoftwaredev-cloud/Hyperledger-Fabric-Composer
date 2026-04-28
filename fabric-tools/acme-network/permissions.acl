@@ -1,0 +1,289 @@
+/*
+ * Drug Supply Chain Control System
+ * Access Control Rules
+ *
+ * Rules are evaluated top-to-bottom. First matching rule wins.
+ * NetworkAdmin has full access (bottom rules) for deployment/admin purposes.
+ */
+
+// ============================================================
+// GOVERNMENT — full control over everything
+// ============================================================
+
+rule GovernmentFullAccess {
+    description: "Government has full access to all network resources"
+    participant: "org.acme.Government"
+    operation: ALL
+    resource: "org.acme.*"
+    action: ALLOW
+}
+
+// ============================================================
+// MANUFACTURER
+// ============================================================
+
+rule ManufacturerCanReadMedicineTypes {
+    description: "Manufacturer can view all registered medicine types"
+    participant: "org.acme.Manufacturer"
+    operation: READ
+    resource: "org.acme.MedicineType"
+    action: ALLOW
+}
+
+rule ManufacturerCanReadOwnLicenses {
+    description: "Manufacturer can only view licenses issued to them"
+    participant(p): "org.acme.Manufacturer"
+    operation: READ
+    resource(r): "org.acme.License"
+    condition: (r.manufacturer.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule ManufacturerCanCreateMedicine {
+    description: "Manufacturer can register new medicine units on the ledger"
+    participant: "org.acme.Manufacturer"
+    operation: CREATE
+    resource: "org.acme.Medicine"
+    action: ALLOW
+}
+
+rule ManufacturerCanUpdateOwnMedicine {
+    description: "Manufacturer can update medicine units they produced (e.g. on order fulfillment)"
+    participant(p): "org.acme.Manufacturer"
+    operation: UPDATE
+    resource(r): "org.acme.Medicine"
+    condition: (r.producedBy.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule ManufacturerCanReadAssignedOrders {
+    description: "Manufacturer can view orders assigned to them"
+    participant(p): "org.acme.Manufacturer"
+    operation: READ
+    resource(r): "org.acme.Order"
+    condition: (r.manufacturer.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule ManufacturerCanUpdateAssignedOrders {
+    description: "Manufacturer can update orders assigned to them (status changes)"
+    participant(p): "org.acme.Manufacturer"
+    operation: UPDATE
+    resource(r): "org.acme.Order"
+    condition: (r.manufacturer.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule ManufacturerCanSubmitCreateMedicine {
+    description: "Manufacturer can submit CreateMedicine transaction"
+    participant: "org.acme.Manufacturer"
+    operation: CREATE
+    resource: "org.acme.CreateMedicine"
+    action: ALLOW
+}
+
+rule ManufacturerCanSubmitProcessOrder {
+    description: "Manufacturer can submit ProcessOrder transaction"
+    participant: "org.acme.Manufacturer"
+    operation: CREATE
+    resource: "org.acme.ProcessOrder"
+    action: ALLOW
+}
+
+rule ManufacturerCanSubmitFulfillOrder {
+    description: "Manufacturer can submit FulfillOrder transaction"
+    participant: "org.acme.Manufacturer"
+    operation: CREATE
+    resource: "org.acme.FulfillOrder"
+    action: ALLOW
+}
+
+// ============================================================
+// PHARMACY
+// ============================================================
+
+rule PharmacyCanReadMedicineTypes {
+    description: "Pharmacy can view all registered medicine types"
+    participant: "org.acme.Pharmacy"
+    operation: READ
+    resource: "org.acme.MedicineType"
+    action: ALLOW
+}
+
+rule PharmacyCanReadOwnMedicine {
+    description: "Pharmacy can only view medicine units they currently own"
+    participant(p): "org.acme.Pharmacy"
+    operation: READ
+    resource(r): "org.acme.Medicine"
+    condition: (r.ownerId === 'resource:org.acme.Pharmacy#' + p.getIdentifier())
+    action: ALLOW
+}
+
+rule PharmacyCanUpdateOwnMedicine {
+    description: "Pharmacy can update medicine they own (e.g. on sale)"
+    participant(p): "org.acme.Pharmacy"
+    operation: UPDATE
+    resource(r): "org.acme.Medicine"
+    condition: (r.ownerId === 'resource:org.acme.Pharmacy#' + p.getIdentifier())
+    action: ALLOW
+}
+
+rule PharmacyCanCreateOrders {
+    description: "Pharmacy can create Order assets"
+    participant: "org.acme.Pharmacy"
+    operation: CREATE
+    resource: "org.acme.Order"
+    action: ALLOW
+}
+
+rule PharmacyCanReadOwnOrders {
+    description: "Pharmacy can only view orders they placed"
+    participant(p): "org.acme.Pharmacy"
+    operation: READ
+    resource(r): "org.acme.Order"
+    condition: (r.pharmacy.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule PharmacyCanReadPrescriptions {
+    description: "Pharmacy can read any prescription to verify it before sale"
+    participant: "org.acme.Pharmacy"
+    operation: READ
+    resource: "org.acme.Prescription"
+    action: ALLOW
+}
+
+rule PharmacyCanUpdatePrescriptions {
+    description: "Pharmacy can update prescriptions to decrement the remaining counter on sale"
+    participant: "org.acme.Pharmacy"
+    operation: UPDATE
+    resource: "org.acme.Prescription"
+    action: ALLOW
+}
+
+rule PharmacyCanReadCitizens {
+    description: "Pharmacy can read citizen records to verify buyer identity"
+    participant: "org.acme.Pharmacy"
+    operation: READ
+    resource: "org.acme.Citizen"
+    action: ALLOW
+}
+
+rule PharmacyCanSubmitCreateOrder {
+    description: "Pharmacy can submit CreateOrder transaction"
+    participant: "org.acme.Pharmacy"
+    operation: CREATE
+    resource: "org.acme.CreateOrder"
+    action: ALLOW
+}
+
+rule PharmacyCanSubmitSellMedicine {
+    description: "Pharmacy can submit SellMedicine transaction"
+    participant: "org.acme.Pharmacy"
+    operation: CREATE
+    resource: "org.acme.SellMedicine"
+    action: ALLOW
+}
+
+// ============================================================
+// DOCTOR
+// ============================================================
+
+rule DoctorCanReadMedicineTypes {
+    description: "Doctor can view medicine types when writing prescriptions"
+    participant: "org.acme.Doctor"
+    operation: READ
+    resource: "org.acme.MedicineType"
+    action: ALLOW
+}
+
+rule DoctorCanReadCitizens {
+    description: "Doctor can read citizen records to link prescriptions to patients"
+    participant: "org.acme.Doctor"
+    operation: READ
+    resource: "org.acme.Citizen"
+    action: ALLOW
+}
+
+rule DoctorCanCreatePrescriptions {
+    description: "Doctor can create Prescription assets"
+    participant: "org.acme.Doctor"
+    operation: CREATE
+    resource: "org.acme.Prescription"
+    action: ALLOW
+}
+
+rule DoctorCanReadOwnPrescriptions {
+    description: "Doctor can read prescriptions they wrote"
+    participant(p): "org.acme.Doctor"
+    operation: READ
+    resource(r): "org.acme.Prescription"
+    condition: (r.doctor.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule DoctorCanSubmitWritePrescription {
+    description: "Doctor can submit WritePrescription transaction"
+    participant: "org.acme.Doctor"
+    operation: CREATE
+    resource: "org.acme.WritePrescription"
+    action: ALLOW
+}
+
+// ============================================================
+// CITIZEN
+// ============================================================
+
+rule CitizenCanReadMedicineTypes {
+    description: "Citizen can view medicine type information"
+    participant: "org.acme.Citizen"
+    operation: READ
+    resource: "org.acme.MedicineType"
+    action: ALLOW
+}
+
+rule CitizenCanReadOwnPrescriptions {
+    description: "Citizen can only view their own prescriptions"
+    participant(p): "org.acme.Citizen"
+    operation: READ
+    resource(r): "org.acme.Prescription"
+    condition: (r.citizen.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+}
+
+rule CitizenCanReadOwnMedicine {
+    description: "Citizen can only view medicine units they own"
+    participant(p): "org.acme.Citizen"
+    operation: READ
+    resource(r): "org.acme.Medicine"
+    condition: (r.ownerId === 'resource:org.acme.Citizen#' + p.getIdentifier())
+    action: ALLOW
+}
+
+// ============================================================
+// SYSTEM RULES — required for Composer to function
+// ============================================================
+
+rule SystemACL {
+    description: "System ACL to permit all access to system resources"
+    participant: "org.hyperledger.composer.system.Participant"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
+
+rule NetworkAdminUser {
+    description: "Grant network administrators full access to all resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "**"
+    action: ALLOW
+}
+
+rule NetworkAdminSystem {
+    description: "Grant network administrators full access to system resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}

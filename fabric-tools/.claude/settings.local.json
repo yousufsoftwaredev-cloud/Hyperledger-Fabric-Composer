@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash /home/yousuf/Desktop/BLockchain-work/fabric-tools/downloadFabric.sh)",
+      "Bash(./downloadFabric.sh)",
+      "Bash(./startFabric.sh)",
+      "Bash(docker pull *)",
+      "Bash(docker run *)",
+      "Bash(curl -s -X POST http://localhost:4000/participants/government -H 'Content-Type: application/json' -d '{\"govId\":\"gov1\",\"name\":\"Ministry of Health\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:4000/participants/manufacturer -H 'Content-Type: application/json' -d '{\"manufacturerId\":\"mfr1\",\"name\":\"PharmaLab Inc\",\"location\":\"Berlin\"}')"
+    ]
+  }
+}
