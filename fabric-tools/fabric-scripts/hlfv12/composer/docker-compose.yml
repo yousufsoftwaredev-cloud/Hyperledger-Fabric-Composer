@@ -31,6 +31,7 @@ services:
     volumes:
         - ./:/etc/hyperledger/configtx
         - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/etc/hyperledger/msp/orderer/msp
+        - orderer-data:/var/hyperledger/production
 
   peer0.org1.example.com:
     container_name: peer0.org1.example.com
@@ -58,6 +59,7 @@ services:
         - ./:/etc/hyperledger/configtx
         - ./crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/peer/msp
         - ./crypto-config/peerOrganizations/org1.example.com/users:/etc/hyperledger/msp/users
+        - peer-data:/var/hyperledger/production
     depends_on:
       - orderer.example.com
       - couchdb
@@ -69,3 +71,10 @@ services:
       - 5984:5984
     environment:
       DB_URL: http://localhost:5984/member_db
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+
+volumes:
+  peer-data:
+  orderer-data:
+  couchdb-data:

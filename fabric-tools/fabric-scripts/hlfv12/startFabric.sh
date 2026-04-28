@@ -60,15 +60,19 @@ docker compose -f "${DOCKER_FILE}" down
 docker compose -f "${DOCKER_FILE}" up -d
 
 # wait for Hyperledger Fabric to start
-# incase of errors when running later commands, issue export FABRIC_START_TIMEOUT=<larger number>
+FABRIC_START_TIMEOUT=${FABRIC_START_TIMEOUT:-15}
 echo "sleeping for ${FABRIC_START_TIMEOUT} seconds to wait for fabric to complete start up"
 sleep ${FABRIC_START_TIMEOUT}
 
-# Create the channel
-docker exec peer0.org1.example.com peer channel create -o orderer.example.com:7050 -c composerchannel -f /etc/hyperledger/configtx/composer-channel.tx
+# Create the channel (skipped if it already exists from a previous run)
+docker exec peer0.org1.example.com peer channel create -o orderer.example.com:7050 -c composerchannel -f /etc/hyperledger/configtx/composer-channel.tx 2>/dev/null \
+  && echo "Channel created." \
+  || echo "Channel already exists, skipping creation."
 
-# Join peer0.org1.example.com to the channel.
-docker exec -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org1.example.com/msp" peer0.org1.example.com peer channel join -b composerchannel.block
+# Join peer to the channel (skipped if already joined)
+docker exec -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org1.example.com/msp" peer0.org1.example.com peer channel join -b composerchannel.block 2>/dev/null \
+  && echo "Peer joined channel." \
+  || echo "Peer already joined channel, skipping."
 
 if [ "${FABRIC_DEV_MODE}" == "true" ]; then
     echo "Fabric Network started in chaincode development mode"
